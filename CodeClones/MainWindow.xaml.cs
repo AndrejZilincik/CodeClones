@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.Win32;
 
 namespace CodeClones
@@ -94,6 +94,21 @@ namespace CodeClones
             }
         }
 
+        // List of code clones
+        private List<Clone> _cloneList = new List<Clone>();
+        public List<Clone> CloneList
+        {
+            get
+            {
+                return _cloneList;
+            }
+            set
+            {
+                _cloneList = value;
+                OnPropertyChanged("CloneList");
+            }
+        }
+        
         // PropertyChanged event
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged(string name)
@@ -124,7 +139,37 @@ namespace CodeClones
                 return null;
             }
         }
-        
+
+        // Compare token lists, create clone list
+        private void CompareFiles()
+        {
+            // Clear clone lists
+            CloneList.Clear();
+
+            // Read source files, separate into individual lines
+            List<string> lines1 = File.ReadLines(FileName1).ToList();
+            List<string> lines2 = File.ReadLines(FileName2).ToList();
+
+            // Get list of clones
+            CloneFinder cloneFinder = new CloneFinder(File1Tokens, File2Tokens);
+            List<Clone> clones = cloneFinder.FindClones();
+
+            // Combine relevant portions of source files
+            foreach (Clone clone in clones)
+            {
+                string code1 = $"{Path.GetFileName(FileName1)}, lines {clone.StartLine1}-{clone.EndLine1}:" + Environment.NewLine + Environment.NewLine;
+                code1 += string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1));
+                clone.Code1 = code1;
+
+                string code2 = $"{Path.GetFileName(FileName2)}, lines {clone.StartLine2}-{clone.EndLine2}:" + Environment.NewLine + Environment.NewLine;
+                code2 += string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2));
+                clone.Code2 = code2;
+            }
+
+            CloneList = clones;
+        }
+
+
         // File 1 selector text box click event handler
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
@@ -132,7 +177,7 @@ namespace CodeClones
             if (FileName1 != null)
             {
                 Tokeniser tokeniser = new Tokeniser(FileName1);
-                 File1Tokens = tokeniser.GetTokens();
+                File1Tokens = tokeniser.GetTokens();
             }
         }
 
@@ -163,6 +208,12 @@ namespace CodeClones
         private void FindClones_Click(object sender, RoutedEventArgs e)
         {
             TabBar.SelectedIndex = 1;
+        }
+
+        // Clones tab got focus event handler
+        private void ClonesTab_GotFocus(object sender, RoutedEventArgs e)
+        {
+            CompareFiles();
         }
     }
 }

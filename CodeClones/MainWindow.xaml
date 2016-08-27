@@ -81,7 +81,12 @@
                     </UniformGrid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Clones" IsEnabled="{Binding AreTwoFilesLoaded}"/>
+            <TabItem Name="ClonesTab" Header="Clones" IsEnabled="{Binding AreTwoFilesLoaded}" GotFocus="ClonesTab_GotFocus">
+                <UniformGrid Rows="1" Columns="2">
+                    <ListBox FontFamily="Consolas" Grid.Column="1" ItemsSource="{Binding CloneList}" DisplayMemberPath="Code1"/>
+                    <ListBox FontFamily="Consolas" Grid.Column="2" ItemsSource="{Binding CloneList}" DisplayMemberPath="Code2"/>
+                </UniformGrid>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>
