@@ -12,6 +12,8 @@ namespace CodeClones
         private List<Token> TokenList1;
         private List<Token> TokenList2;
 
+        Dictionary<string, string> Identifiers = new Dictionary<string, string>();
+
         public CloneFinder(List<Token> tokenList1, List<Token> tokenList2)
         {
             this.TokenList1 = tokenList1;
@@ -33,26 +35,34 @@ namespace CodeClones
                 for (int j = 0; j < lineStartTokens2.Count - MinLines + 1; j++)
                 {
                     int initIndex1 = lineStartTokens1[i];
-                    int index1 = lineStartTokens1[i];
                     int initIndex2 = lineStartTokens2[j];
+                    int index1 = lineStartTokens1[i];
                     int index2 = lineStartTokens2[j];
-
-                    while (TokenList1[index1].Value == TokenList2[index2].Value && index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count)
+                    
+                    // Compare tokens at beginning of line
+                    if (CompareTokens(TokenList1[index1], TokenList2[index2]))
                     {
-                        index1++;
-                        index2++;
-                    }
-
-                    // If clone is long enough, add it to the clone list
-                    if (TokenList1[index1].LineNumber - TokenList1[initIndex1].LineNumber >= MinLines &&
-                        TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber >= MinLines)
-                    {
-                        clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
-
-                        // Advance search index past end of clone
-                        while (i < lineStartTokens1.Count && lineStartTokens1[i] < index1)
+                        // Keep comparing tokens until they no longer match
+                        while (index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count && CompareTokens(TokenList1[index1 + 1], TokenList2[index2 + 1]))
                         {
-                            i++;
+                            index1++;
+                            index2++;
+                        }
+
+                        // Empty stored identifiers
+                        Identifiers.Clear();
+
+                        // If clone is long enough, add it to the clone list
+                        if (TokenList1[index1].LineNumber - TokenList1[initIndex1].LineNumber >= MinLines &&
+                            TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber >= MinLines)
+                        {
+                            clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
+
+                            //// Advance search index past end of clone
+                            //while (i < lineStartTokens1.Count && lineStartTokens1[i] < index1 + 1)
+                            //{
+                            //    i++;
+                            //}
                         }
                     }
                 }
@@ -71,12 +81,47 @@ namespace CodeClones
             {
                 if (tokenList[i].LineNumber != line)
                 {
+                    // If token is on a new line, add it
                     line = tokenList[i].LineNumber;
                     lineStartTokens.Add(i);
                 }
             }
 
             return lineStartTokens;
+        }
+
+        // Compare tokens
+        private bool CompareTokens(Token token1, Token token2)
+        {
+            if (token1.Type != token2.Type)
+            {
+                // Tokens are not the same if their type does not match
+                return false;
+            }
+            else if (token1.Value == "include")
+            {
+                // Ignore clones containing include statements
+                return false;
+            }
+            else if (token1.Type == TokenType.Identifier)
+            {
+                if (Identifiers.ContainsKey(token1.Value))
+                {
+                    // Lookup identifier in dictionary
+                    return token2.Value == Identifiers[token1.Value];
+                }
+                else
+                {
+                    // Add identifier to dictionary
+                    Identifiers.Add(token1.Value, token2.Value);
+                    return true;
+                }
+            }
+            else
+            {
+                // Compare token values
+                return token1.Value == token2.Value;
+            }
         }
     }
 }
