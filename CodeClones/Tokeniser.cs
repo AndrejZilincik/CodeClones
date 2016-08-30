@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -15,6 +16,9 @@ namespace CodeClones
         {
             // Read all text from file into a string
             Text = File.ReadAllText(fileName);
+
+            // Remove comments from text
+            Text = RemoveComments(Text);
         }
 
         public List<Token> GetTokens()
@@ -59,6 +63,31 @@ namespace CodeClones
                 TokenType type = KEYWORDS.Contains(str) ? TokenType.Keyword : TokenType.Identifier;
                 tokenList.Add(new Token(type, str, lineNumber));
             }
+        }
+        
+        // Remove C-style single line and multiline comments
+        private string RemoveComments(string text)
+        {
+            // Remove single line comments
+            int pos = text.IndexOf("//");
+            int end;
+            while (pos > -1)
+            {
+                end = text.IndexOf(Environment.NewLine, pos);
+                text = text.Remove(pos, end - pos);
+                pos = text.IndexOf("//", pos);
+            }
+
+            // Remove multiline comments
+            pos = text.IndexOf("/*");
+            while (pos > -1)
+            {
+                end = text.IndexOf("*/", pos);
+                text = text.Remove(pos, end - pos);
+                pos = text.IndexOf("/*", pos);
+            }
+
+            return text;
         }
     }
 }

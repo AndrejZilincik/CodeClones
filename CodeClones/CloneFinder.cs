@@ -9,6 +9,9 @@ namespace CodeClones
         // Minimum length in lines to be considered a clone
         static readonly int MinLines = 3;
 
+        // Minimum number of tokens to be considered a clone
+        static readonly int MinTokens = 5;
+
         private List<Token> TokenList1;
         private List<Token> TokenList2;
 
@@ -54,7 +57,8 @@ namespace CodeClones
 
                         // If clone is long enough, add it to the clone list
                         if (TokenList1[index1].LineNumber - TokenList1[initIndex1].LineNumber >= MinLines &&
-                            TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber >= MinLines)
+                            TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber >= MinLines &&
+                            index1 - initIndex1 >= MinTokens)
                         {
                             clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
 
