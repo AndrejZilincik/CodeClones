@@ -149,17 +149,16 @@ namespace CodeClones
             foreach (Clone clone in clones)
             {
                 string code1 = $"{Path.GetFileName(FileName1)}, lines {clone.StartLine1}-{clone.EndLine1}:" + Environment.NewLine + Environment.NewLine;
-                code1 += string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1));
+                code1 += string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1));
                 clone.Code1 = code1;
 
                 string code2 = $"{Path.GetFileName(FileName2)}, lines {clone.StartLine2}-{clone.EndLine2}:" + Environment.NewLine + Environment.NewLine;
-                code2 += string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2));
+                code2 += string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1));
                 clone.Code2 = code2;
             }
 
             CloneList = clones;
         }
-
 
         // File 1 selector text box click event handler
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)

@@ -12,9 +12,11 @@ namespace CodeClones
         // Minimum number of tokens to be considered a clone
         static readonly int MinTokens = 5;
 
+        // Token lists to find clones in
         private List<Token> TokenList1;
         private List<Token> TokenList2;
 
+        // Stores previously used identifier names
         Dictionary<string, string> Identifiers = new Dictionary<string, string>();
 
         public CloneFinder(List<Token> tokenList1, List<Token> tokenList2)
@@ -32,7 +34,7 @@ namespace CodeClones
             List<int> lineStartTokens1 = GetLineStartTokens(TokenList1);
             List<int> lineStartTokens2 = GetLineStartTokens(TokenList2);
 
-            // Starting at these tokens, compare tokens in both lists until they do not match
+            // Starting at each pair of these tokens, compare tokens in both lists until tokens do not match
             for (int i = 0; i < lineStartTokens1.Count - MinLines + 1; i++)
             {
                 for (int j = 0; j < lineStartTokens2.Count - MinLines + 1; j++)
@@ -41,23 +43,24 @@ namespace CodeClones
                     int initIndex2 = lineStartTokens2[j];
                     int index1 = lineStartTokens1[i];
                     int index2 = lineStartTokens2[j];
-                    
+
                     // Compare tokens at beginning of line
                     if (CompareTokens(TokenList1[index1], TokenList2[index2]))
                     {
                         // Keep comparing tokens until they no longer match
                         while (index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count && CompareTokens(TokenList1[index1 + 1], TokenList2[index2 + 1]))
                         {
+                            // Move to next token
                             index1++;
                             index2++;
                         }
 
-                        // Empty stored identifiers
+                        // Empty list of stored identifiers
                         Identifiers.Clear();
 
                         // If clone is long enough, add it to the clone list
-                        if (TokenList1[index1].LineNumber - TokenList1[initIndex1].LineNumber >= MinLines &&
-                            TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber >= MinLines &&
+                        if ((index1 + 1 == TokenList1.Count || index1 >= lineStartTokens1[i + MinLines]) && 
+                            (index2 + 1 == TokenList2.Count || index2 >= lineStartTokens1[j + MinLines]) &&
                             index1 - initIndex1 >= MinTokens)
                         {
                             clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));

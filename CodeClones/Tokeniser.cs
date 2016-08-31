@@ -29,7 +29,7 @@ namespace CodeClones
             {
                 if (char.IsLetterOrDigit(c) || c == '_')
                 {
-                    // Add letter/digit to current token
+                    // Part of identifier/keyword - add to current token
                     str += c;
                 }
                 else
@@ -68,12 +68,19 @@ namespace CodeClones
         // Remove C-style single line and multiline comments
         private string RemoveComments(string text)
         {
+            // TODO: Ignore comment symbols inside comments and literal strings
+            
             // Remove single line comments
             int pos = text.IndexOf("//");
             int end;
             while (pos > -1)
             {
-                end = text.IndexOf(Environment.NewLine, pos);
+                end = text.IndexOf('\n', pos);
+                if (end == -1)
+                {
+                    text = text.Remove(pos);
+                    break;
+                }
                 text = text.Remove(pos, end - pos);
                 pos = text.IndexOf("//", pos);
             }
@@ -83,6 +90,10 @@ namespace CodeClones
             while (pos > -1)
             {
                 end = text.IndexOf("*/", pos);
+                if (end == -1)
+                {
+                    break;
+                }
                 text = text.Remove(pos, end - pos);
                 pos = text.IndexOf("/*", pos);
             }
