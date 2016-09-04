@@ -101,52 +101,66 @@
                         <TextBlock Text="{Binding CloneList.Count, StringFormat={}{0} clones found!}"/>
                     </StatusBar>
                     <UniformGrid Rows="1" Columns="2">
-                    <UniformGrid.Resources>
-                        <Style TargetType="TextBox">
-                            <Setter Property="FontFamily" Value="Consolas"/>
-                            <Setter Property="Foreground" Value="DimGray"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="IsReadOnly" Value="True"/>
-                        </Style>
-                    </UniformGrid.Resources>
-                    <ListBox Grid.Column="1" ItemsSource="{Binding CloneList}" ScrollViewer.CanContentScroll="False">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical">
-                                    <TextBlock Margin="2,0,0,4" FontSize="16">
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0}, lines {1}-{2}:">
-                                                <Binding Path="FileName1"/>
-                                                <Binding Path="StartLine1"/>
-                                                <Binding Path="EndLine1"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                    <TextBox Text="{Binding Code1}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <ListBox Grid.Column="2" ItemsSource="{Binding CloneList}" ScrollViewer.CanContentScroll="False">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical">
-                                    <TextBlock Margin="2,0,0,4" FontSize="16">
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0}, lines {1}-{2}:">
-                                                <Binding Path="FileName2"/>
-                                                <Binding Path="StartLine2"/>
-                                                <Binding Path="EndLine2"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                    <TextBox Text="{Binding Code2}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </UniformGrid>
+                        <UniformGrid.Resources>
+                            <Style TargetType="TextBox">
+                                <Setter Property="FontFamily" Value="Consolas"/>
+                                <Setter Property="Foreground" Value="DimGray"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="IsReadOnly" Value="True"/>
+                            </Style>
+                        </UniformGrid.Resources>
+                        <ListBox Name="Clones1" Grid.Column="1" ItemsSource="{Binding CloneList}" ScrollViewer.CanContentScroll="False">
+                            <ListBox.Template>
+                                <ControlTemplate>
+                                    <ScrollViewer ScrollChanged="CloneScroll1_ScrollChanged">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </ControlTemplate>
+                            </ListBox.Template>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Margin="2,0,0,4" FontSize="16">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}, lines {1}-{2}:">
+                                                    <Binding Path="FileName1"/>
+                                                    <Binding Path="StartLine1"/>
+                                                    <Binding Path="EndLine1"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <TextBox Text="{Binding Code1}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <ListBox Name="Clones2" Grid.Column="2" ItemsSource="{Binding CloneList}" ScrollViewer.CanContentScroll="False">
+                            <ListBox.Template>
+                                <ControlTemplate>
+                                    <ScrollViewer ScrollChanged="CloneScroll2_ScrollChanged">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </ControlTemplate>
+                            </ListBox.Template>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Margin="2,0,0,4" FontSize="16">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}, lines {1}-{2}:">
+                                                    <Binding Path="FileName2"/>
+                                                    <Binding Path="StartLine2"/>
+                                                    <Binding Path="EndLine2"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <TextBox Text="{Binding Code2}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </UniformGrid>
                 </DockPanel>
             </TabItem>
         </TabControl>

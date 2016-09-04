@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace CodeClones
@@ -61,12 +62,20 @@ namespace CodeClones
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
-        
+
+        ScrollViewer scroll1;
+        ScrollViewer scroll2;
+
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = this;
             FileList.CollectionChanged += (s, e) => { OnPropertyChanged("AreTwoFilesLoaded"); };
+            this.Loaded += (s, e) =>
+            {
+                scroll1 = (ScrollViewer)GetDescendantByType(Clones1, typeof(ScrollViewer));
+                scroll2 = (ScrollViewer)GetDescendantByType(Clones2, typeof(ScrollViewer));
+            };
         }
 
         // Setup and display open file dialog
@@ -101,8 +110,9 @@ namespace CodeClones
             // Get relevant portions of source files
             foreach (Clone clone in clones)
             {
-                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1));
-                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1));
+                // TODO: Make both of these the same length
+                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1)) + Environment.NewLine;
+                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1)) + Environment.NewLine;
             }
 
             return clones;
@@ -137,20 +147,19 @@ namespace CodeClones
             }
 
             // Add file to file list
-            if (!FileList.Any(f => f.FileName == fileName))
+            if (FileList.Count < 1)
             {
-                FileList.Insert(0, new TokenList(fileName));
+                FileList.Add(new TokenList(fileName));
+            }
+            else if (!FileList.Any(f => f.FileName == fileName))
+            {
+                FileList[0] = new TokenList(fileName);
             }
         }
 
         // File 2 selector text box click event handler
         private void File2_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (FileList.Count < 1)
-            {
-                return;
-            }
-
             // Select file
             string fileName = OpenFile();
             if (fileName == null)
@@ -159,9 +168,13 @@ namespace CodeClones
             }
 
             // Add file to file list
-            if (!FileList.Any(f => f.FileName == fileName))
+            if (FileList.Count < 2)
             {
-                FileList.Insert(1, new TokenList(fileName));
+                FileList.Add(new TokenList(fileName));
+            }
+            else if (!FileList.Any(f => f.FileName == fileName))
+            {
+                FileList[1] = new TokenList(fileName);
             }
         }
 
@@ -221,6 +234,36 @@ namespace CodeClones
         {
             FileList.Clear();
         }
+
+        // Synchronise scrolls in clone display tab
+        private void CloneScroll1_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            scroll2.ScrollToVerticalOffset(e.VerticalOffset);
+        }
+        private void CloneScroll2_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            scroll1.ScrollToVerticalOffset(e.VerticalOffset);
+        }
+        // Needed to access list box scrolls
+        public Visual GetDescendantByType(Visual element, Type type)
+        {
+            if (element == null) return null;
+            if (element.GetType() == type) return element;
+            Visual foundElement = null;
+            if (element is FrameworkElement)
+            {
+                (element as FrameworkElement).ApplyTemplate();
+            }
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(element); i++)
+            {
+                Visual visual = VisualTreeHelper.GetChild(element, i) as Visual;
+                foundElement = GetDescendantByType(visual, type);
+                if (foundElement != null)
+                    break;
+            }
+            return foundElement;
+        }
+
         #endregion
     }
 }
