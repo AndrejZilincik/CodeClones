@@ -200,10 +200,13 @@ namespace CodeClones
             TabBar.SelectedIndex = 1;
         }
 
-        // Clones tab got focus event handler
-        private void ClonesTab_GotFocus(object sender, RoutedEventArgs e)
+        // Switch tab event handler
+        private void TabBar_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            CompareFiles();
+            if (sender != null && ((System.Windows.Controls.TabControl)sender).SelectedIndex == 1)
+            {
+                CompareFiles();
+            }
         }
     }
 }

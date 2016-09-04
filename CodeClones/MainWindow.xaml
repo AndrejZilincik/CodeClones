@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CodeClones"
         mc:Ignorable="d"
-        Title="Code Clone Finder" Height="480" Width="640">
+        Title="Code Clone Finder" Height="600" Width="800">
     <Window.Resources>
         <Style TargetType="Border" x:Key="DarkGrayBorder">
             <Setter Property="BorderThickness" Value="1"/>
@@ -21,7 +21,7 @@
                 <MenuItem Name="About" Header="About" Click="About_Click"/>
             </MenuItem>
         </Menu>
-        <TabControl Name="TabBar">
+        <TabControl Name="TabBar" SelectionChanged="TabBar_SelectionChanged">
             <TabItem Header="Files">
                 <DockPanel>
                     <Button Name="FindClones" DockPanel.Dock="Bottom" Height="50" FontSize="24" IsEnabled="{Binding AreTwoFilesLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
@@ -81,7 +81,7 @@
                     </UniformGrid>
                 </DockPanel>
             </TabItem>
-            <TabItem Name="ClonesTab" Header="Clones" IsEnabled="{Binding AreTwoFilesLoaded}" GotFocus="ClonesTab_GotFocus">
+            <TabItem Name="ClonesTab" Header="Clones" IsEnabled="{Binding AreTwoFilesLoaded}">
                 <UniformGrid Rows="1" Columns="2">
                     <ListBox FontFamily="Consolas" Grid.Column="1" ItemsSource="{Binding CloneList}" DisplayMemberPath="Code1"/>
                     <ListBox FontFamily="Consolas" Grid.Column="2" ItemsSource="{Binding CloneList}" DisplayMemberPath="Code2"/>

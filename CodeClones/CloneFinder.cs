@@ -35,41 +35,41 @@ namespace CodeClones
             List<int> lineStartTokens2 = GetLineStartTokens(TokenList2);
 
             // Starting at each pair of these tokens, compare tokens in both lists until tokens do not match
-            for (int i = 0; i < lineStartTokens1.Count - MinLines + 1; i++)
+            for (int line1 = 0; line1 + MinLines - 1 < lineStartTokens1.Count; line1++)
             {
-                for (int j = 0; j < lineStartTokens2.Count - MinLines + 1; j++)
+                for (int line2 = 0; line2 + MinLines - 1 < lineStartTokens2.Count; line2++)
                 {
-                    int initIndex1 = lineStartTokens1[i];
-                    int initIndex2 = lineStartTokens2[j];
-                    int index1 = lineStartTokens1[i];
-                    int index2 = lineStartTokens2[j];
+                    int initIndex1 = lineStartTokens1[line1];
+                    int initIndex2 = lineStartTokens2[line2];
+                    int index1 = lineStartTokens1[line1];
+                    int index2 = lineStartTokens2[line2];
 
                     // Compare tokens at beginning of line
                     if (CompareTokens(TokenList1[index1], TokenList2[index2]))
                     {
-                        // Keep comparing tokens until they no longer match
-                        while (index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count && CompareTokens(TokenList1[index1 + 1], TokenList2[index2 + 1]))
+                        // Check if clone overlaps with another clone
+                        if (!clones.Any(c => c.StartLine1 <= TokenList1[index1].LineNumber && c.EndLine1 >= TokenList1[index1].LineNumber &&
+                                             c.StartLine2 <= TokenList2[index2].LineNumber && c.EndLine2 >= TokenList2[index2].LineNumber))
                         {
-                            // Move to next token
-                            index1++;
-                            index2++;
-                        }
 
-                        // Empty list of stored identifiers
-                        Identifiers.Clear();
+                            // Keep comparing tokens until they no longer match
+                            while (index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count && CompareTokens(TokenList1[index1 + 1], TokenList2[index2 + 1]))
+                            {
+                                // Move to next token
+                                index1++;
+                                index2++;
+                            }
 
-                        // If clone is long enough, add it to the clone list
-                        if ((index1 + 1 == TokenList1.Count || index1 >= lineStartTokens1[i + MinLines]) && 
-                            (index2 + 1 == TokenList2.Count || index2 >= lineStartTokens1[j + MinLines]) &&
-                            index1 - initIndex1 >= MinTokens)
-                        {
-                            clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
+                            // Empty list of stored identifiers
+                            Identifiers.Clear();
 
-                            //// Advance search index past end of clone
-                            //while (i < lineStartTokens1.Count && lineStartTokens1[i] < index1 + 1)
-                            //{
-                            //    i++;
-                            //}
+                            // If clone is long enough, add it to the clone list
+                            if ((index1 + 1 >= TokenList1.Count || (line1 + MinLines < lineStartTokens1.Count && index1 >= lineStartTokens1[line1 + MinLines])) &&
+                                (index2 + 1 >= TokenList2.Count || (line2 + MinLines < lineStartTokens2.Count && index2 >= lineStartTokens2[line2 + MinLines])) &&
+                                index1 - initIndex1 >= MinTokens)
+                            {
+                                clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
+                            }
                         }
                     }
                 }
