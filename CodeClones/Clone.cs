@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.IO;
 
 namespace CodeClones
 {
@@ -10,6 +11,19 @@ namespace CodeClones
         public int StartLine2 { get; private set; }
         public int EndLine2 { get; private set; }
 
+        private string _fileName1;
+        public string FileName1
+        {
+            get
+            {
+                return Path.GetFileName(_fileName1);
+            }
+            set
+            {
+                _fileName1 = value;
+                OnPropertyChanged("FileName1");
+            }
+        }
         private string _code1;
         public string Code1
         {
@@ -24,6 +38,19 @@ namespace CodeClones
             }
         }
 
+        private string _fileName2;
+        public string FileName2
+        {
+            get
+            {
+                return Path.GetFileName(_fileName2);
+            }
+            set
+            {
+                _fileName2 = value;
+                OnPropertyChanged("FileName2");
+            }
+        }
         private string _code2;
         public string Code2
         {
@@ -49,6 +76,7 @@ namespace CodeClones
         {
             this.StartLine1 = startLine1;
             this.EndLine1 = endLine1;
+            
             this.StartLine2 = startLine2;
             this.EndLine2 = endLine2;
         }

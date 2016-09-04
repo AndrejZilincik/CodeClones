@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
 
@@ -85,6 +87,21 @@ namespace CodeClones
             }
         }
 
+        // List of files to find clones in
+        private ObservableCollection<string> _fileList = new ObservableCollection<string>();
+        public ObservableCollection<string> FileList
+        {
+            get
+            {
+                return _fileList;
+            }
+            set
+            {
+                _fileList = value;
+                OnPropertyChanged("FileList");
+            }
+        }
+
         // List of code clones
         private List<Clone> _cloneList = new List<Clone>();
         public List<Clone> CloneList
@@ -132,34 +149,47 @@ namespace CodeClones
         }
 
         // Compare token lists, create clone list
-        private void CompareFiles()
+        private List<Clone> CompareTokenLists(List<Token> tokens1, List<Token> tokens2)
         {
-            // Clear clone lists
-            CloneList.Clear();
-
-            // Read source files, separate into individual lines
-            List<string> lines1 = File.ReadLines(FileName1).ToList();
-            List<string> lines2 = File.ReadLines(FileName2).ToList();
+            // Read source files, separated into individual lines
+            IEnumerable<string> lines1 = File.ReadLines(FileName1);
+            IEnumerable<string> lines2 = File.ReadLines(FileName2);
 
             // Get list of clones
-            CloneFinder cloneFinder = new CloneFinder(File1Tokens, File2Tokens);
+            CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2);
             List<Clone> clones = cloneFinder.FindClones();
 
-            // Combine relevant portions of source files
+            // Get relevant portions of source files
             foreach (Clone clone in clones)
             {
-                string code1 = $"{Path.GetFileName(FileName1)}, lines {clone.StartLine1}-{clone.EndLine1}:" + Environment.NewLine + Environment.NewLine;
-                code1 += string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1));
-                clone.Code1 = code1;
+                clone.FileName1 = this.FileName1;
+                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1));
 
-                string code2 = $"{Path.GetFileName(FileName2)}, lines {clone.StartLine2}-{clone.EndLine2}:" + Environment.NewLine + Environment.NewLine;
-                code2 += string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1));
-                clone.Code2 = code2;
+                clone.FileName2 = this.FileName2;
+                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1));
             }
 
-            CloneList = clones;
+            return clones;
         }
 
+        // Compare two or more token lists with each other
+        private List<Clone> CompareManyTokenLists(List<List<Token>> tokenLists)
+        {
+            List<Clone> clones = new List<Clone>();
+
+            // Compare each token list with all token lists after it
+            foreach (List<Token> tokens1 in tokenLists)
+            {
+                foreach(List<Token> tokens2 in tokenLists.SkipWhile(t => t.SequenceEqual(tokens1)).Skip(1))
+                {
+                    clones.AddRange(CompareTokenLists(tokens1, tokens2));
+                }
+            }
+
+            return clones;
+        }
+
+        #region UI Element Event Handlers
         // File 1 selector text box click event handler
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
@@ -197,16 +227,47 @@ namespace CodeClones
         // Find clones button click event handler
         private void FindClones_Click(object sender, RoutedEventArgs e)
         {
-            TabBar.SelectedIndex = 1;
+            TabBar.SelectedItem = ClonesTab;
         }
 
         // Switch tab event handler
-        private void TabBar_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void TabBar_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender != null && ((System.Windows.Controls.TabControl)sender).SelectedIndex == 1)
+            if (sender != null && (sender as TabControl).SelectedItem as TabItem == ClonesTab)
             {
-                CompareFiles();
+                // Find clones and populate clone list
+                CloneList = CompareTokenLists(File1Tokens, File2Tokens);
             }
         }
+
+        // Add files to list of files to find clones in
+        private void AddFiles_Click(object sender, RoutedEventArgs e)
+        {
+            // Display open file dialog
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = true;
+            ofd.Title = "Select files to add...";
+            ofd.DefaultExt = ".cpp";
+            ofd.Filter = "C/C++ source files|*.cpp;*.hpp;*.c;*.h|All files|*.*";
+
+            // Add selected files
+            if (ofd.ShowDialog() == true)
+            {
+                foreach (string file in ofd.FileNames)
+                {
+                    if (!FileList.Contains(file))
+                    {
+                        FileList.Add(file);
+                    }
+                }
+            }
+        }
+
+        // Clear list of files to find clones in
+        private void ClearFiles_Click(object sender, RoutedEventArgs e)
+        {
+            FileList.Clear();
+        }
+        #endregion
     }
 }
