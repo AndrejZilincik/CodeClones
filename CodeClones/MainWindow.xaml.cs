@@ -16,80 +16,9 @@ namespace CodeClones
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        // Path to file 1
-        private string _fileName1;
-        public string FileName1
-        {
-            get
-            {
-                return _fileName1;
-            }
-            set
-            {
-                _fileName1 = value;
-                OnPropertyChanged("FileName1");
-            }
-        }
-
-        // Path to file 2
-        private string _fileName2;
-        public string FileName2
-        {
-            get
-            {
-                return _fileName2;
-            }
-            set
-            {
-                _fileName2 = value;
-                OnPropertyChanged("FileName2");
-            }
-        }
-
-        // List of tokens in file 1
-        private List<Token> _file1Tokens = new List<Token>();
-        public List<Token> File1Tokens
-        {
-            get
-            {
-                return _file1Tokens;
-            }
-            set
-            {
-                _file1Tokens = value;
-                OnPropertyChanged("File1Tokens");
-                OnPropertyChanged("AreTwoFilesLoaded");
-            }
-        }
-
-        // List of tokens in file 2
-        private List<Token> _file2Tokens = new List<Token>();
-        public List<Token> File2Tokens
-        {
-            get
-            {
-                return _file2Tokens;
-            }
-            set
-            {
-                _file2Tokens = value;
-                OnPropertyChanged("File2Tokens");
-                OnPropertyChanged("AreTwoFilesLoaded");
-            }
-        }
-
-        // Check whether two files are loaded
-        public bool AreTwoFilesLoaded
-        {
-            get
-            {
-                return (FileName1 != null && FileName2 != null);
-            }
-        }
-
         // List of files to find clones in
-        private ObservableCollection<string> _fileList = new ObservableCollection<string>();
-        public ObservableCollection<string> FileList
+        private ObservableCollection<TokenList> _fileList = new ObservableCollection<TokenList>();
+        public ObservableCollection<TokenList> FileList
         {
             get
             {
@@ -102,6 +31,15 @@ namespace CodeClones
             }
         }
 
+        // Check whether two files are loaded
+        public bool AreTwoFilesLoaded
+        {
+            get
+            {
+                return FileList.Count >= 2;
+            }
+        }
+        
         // List of code clones
         private List<Clone> _cloneList = new List<Clone>();
         public List<Clone> CloneList
@@ -128,6 +66,7 @@ namespace CodeClones
         {
             InitializeComponent();
             this.DataContext = this;
+            FileList.CollectionChanged += (s, e) => { OnPropertyChanged("AreTwoFilesLoaded"); };
         }
 
         // Setup and display open file dialog
@@ -149,11 +88,11 @@ namespace CodeClones
         }
 
         // Compare token lists, create clone list
-        private List<Clone> CompareTokenLists(List<Token> tokens1, List<Token> tokens2)
+        private List<Clone> CompareTokenLists(TokenList tokens1, TokenList tokens2)
         {
             // Read source files, separated into individual lines
-            IEnumerable<string> lines1 = File.ReadLines(FileName1);
-            IEnumerable<string> lines2 = File.ReadLines(FileName2);
+            IEnumerable<string> lines1 = File.ReadLines(tokens1.FileName);
+            IEnumerable<string> lines2 = File.ReadLines(tokens2.FileName);
 
             // Get list of clones
             CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2);
@@ -162,10 +101,7 @@ namespace CodeClones
             // Get relevant portions of source files
             foreach (Clone clone in clones)
             {
-                clone.FileName1 = this.FileName1;
                 clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1));
-
-                clone.FileName2 = this.FileName2;
                 clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1));
             }
 
@@ -173,14 +109,14 @@ namespace CodeClones
         }
 
         // Compare two or more token lists with each other
-        private List<Clone> CompareManyTokenLists(List<List<Token>> tokenLists)
+        private List<Clone> CompareManyTokenLists(IEnumerable<TokenList> tokenLists)
         {
             List<Clone> clones = new List<Clone>();
 
             // Compare each token list with all token lists after it
-            foreach (List<Token> tokens1 in tokenLists)
+            foreach (TokenList tokens1 in tokenLists)
             {
-                foreach(List<Token> tokens2 in tokenLists.SkipWhile(t => t.SequenceEqual(tokens1)).Skip(1))
+                foreach(TokenList tokens2 in tokenLists.SkipWhile(t => !t.Tokens.SequenceEqual(tokens1.Tokens)).Skip(1))
                 {
                     clones.AddRange(CompareTokenLists(tokens1, tokens2));
                 }
@@ -193,22 +129,39 @@ namespace CodeClones
         // File 1 selector text box click event handler
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            FileName1 = OpenFile() ?? FileName1;
-            if (FileName1 != null)
+            // Select file
+            string fileName = OpenFile();
+            if (fileName == null)
             {
-                Tokeniser tokeniser = new Tokeniser(FileName1);
-                File1Tokens = tokeniser.GetTokens();
+                return;
+            }
+
+            // Add file to file list
+            if (!FileList.Any(f => f.FileName == fileName))
+            {
+                FileList.Insert(0, new TokenList(fileName));
             }
         }
 
         // File 2 selector text box click event handler
         private void File2_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            FileName2 = OpenFile() ?? FileName2;
-            if (FileName2 != null)
+            if (FileList.Count < 1)
             {
-                Tokeniser tokeniser = new Tokeniser(FileName2);
-                File2Tokens = tokeniser.GetTokens();
+                return;
+            }
+
+            // Select file
+            string fileName = OpenFile();
+            if (fileName == null)
+            {
+                return;
+            }
+
+            // Add file to file list
+            if (!FileList.Any(f => f.FileName == fileName))
+            {
+                FileList.Insert(1, new TokenList(fileName));
             }
         }
 
@@ -236,7 +189,7 @@ namespace CodeClones
             if (sender != null && (sender as TabControl).SelectedItem as TabItem == ClonesTab)
             {
                 // Find clones and populate clone list
-                CloneList = CompareTokenLists(File1Tokens, File2Tokens);
+                CloneList = CompareManyTokenLists(FileList);
             }
         }
 
@@ -255,9 +208,9 @@ namespace CodeClones
             {
                 foreach (string file in ofd.FileNames)
                 {
-                    if (!FileList.Contains(file))
+                    if (!FileList.Any(f => f.FileName == file))
                     {
-                        FileList.Add(file);
+                        FileList.Add(new TokenList(file));
                     }
                 }
             }

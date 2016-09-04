@@ -12,6 +12,10 @@ namespace CodeClones
         // Minimum number of tokens to be considered a clone
         static readonly int MinTokens = 5;
 
+        // Filenames of the files being searched
+        private string FileName1;
+        private string FileName2;
+
         // Token lists to find clones in
         private List<Token> TokenList1;
         private List<Token> TokenList2;
@@ -19,10 +23,13 @@ namespace CodeClones
         // Stores previously used identifier names
         Dictionary<string, string> Identifiers = new Dictionary<string, string>();
 
-        public CloneFinder(List<Token> tokenList1, List<Token> tokenList2)
+        public CloneFinder(TokenList tokenList1, TokenList tokenList2)
         {
-            this.TokenList1 = tokenList1;
-            this.TokenList2 = tokenList2;
+            this.FileName1 = tokenList1.FileName;
+            this.TokenList1 = tokenList1.Tokens;
+
+            this.FileName2 = tokenList2.FileName;
+            this.TokenList2 = tokenList2.Tokens;
         }
 
         // Find clones in a pair of token lists
@@ -68,7 +75,7 @@ namespace CodeClones
                                 (index2 + 1 >= TokenList2.Count || (line2 + MinLines < lineStartTokens2.Count && index2 >= lineStartTokens2[line2 + MinLines])) &&
                                 index1 - initIndex1 >= MinTokens)
                             {
-                                clones.Add(new Clone(TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
+                                clones.Add(new Clone(FileName1, TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, FileName2, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
                             }
                         }
                     }

@@ -38,11 +38,11 @@
                                         <TextBlock Margin="4,0,4,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="{Binding FileName1}"/>
+                                                    <Setter Property="Text" Value="{Binding FileList[0].FileName}"/>
                                                     <Setter Property="Foreground" Value="Black"/>
                                                     <Setter Property="HorizontalAlignment" Value="Right"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding FileName1}" Value="{x:Null}">
+                                                        <DataTrigger Binding="{Binding FileList[0].FileName}" Value="{x:Null}">
                                                             <Setter Property="Text" Value="Click to select a file..."/>
                                                             <Setter Property="Foreground" Value="DarkGray"/>
                                                             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -53,7 +53,7 @@
                                         </TextBlock>
                                     </Border>
                                 </DockPanel>
-                                <ListBox ItemsSource="{Binding File1Tokens}" DisplayMemberPath="Value"/>
+                                <ListBox ItemsSource="{Binding FileList[0].Tokens}" DisplayMemberPath="Value"/>
                             </DockPanel>
                         </Border>
                         <Border Style="{StaticResource DarkGrayBorder}">
@@ -64,11 +64,11 @@
                                         <TextBlock Margin="4,0,4,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="{Binding FileName2}"/>
+                                                    <Setter Property="Text" Value="{Binding FileList[1].FileName}"/>
                                                     <Setter Property="Foreground" Value="Black"/>
                                                     <Setter Property="HorizontalAlignment" Value="Right"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding FileName2}" Value="{x:Null}">
+                                                        <DataTrigger Binding="{Binding FileList[1].FileName}" Value="{x:Null}">
                                                             <Setter Property="Text" Value="Click to select a file..."/>
                                                             <Setter Property="Foreground" Value="DarkGray"/>
                                                             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -79,7 +79,7 @@
                                         </TextBlock>
                                     </Border>
                                 </DockPanel>
-                                <ListBox ItemsSource="{Binding File2Tokens}" DisplayMemberPath="Value"/>
+                                <ListBox ItemsSource="{Binding FileList[1].Tokens}" DisplayMemberPath="Value"/>
                             </DockPanel>
                         </Border>
                     </UniformGrid>
@@ -92,7 +92,7 @@
                         <Button Grid.Column="2" Click="ClearFiles_Click" Content="Clear list"/>
                     </UniformGrid>
                     <Button DockPanel.Dock="Bottom" IsEnabled="{Binding AreTwoFilesLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
-                    <ListBox ItemsSource="{Binding FileList}"/>
+                    <ListBox ItemsSource="{Binding FileList}" DisplayMemberPath="FileName"/>
                 </DockPanel>
             </TabItem>
             <TabItem Name="ClonesTab" IsEnabled="{Binding AreTwoFilesLoaded}" Header="Clones">
