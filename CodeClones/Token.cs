@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace CodeClones
+﻿namespace CodeClones
 {
     public enum TokenType { Keyword, Identifier, Symbol }
 

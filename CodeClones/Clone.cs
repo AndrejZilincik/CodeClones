@@ -12,33 +12,7 @@ namespace CodeClones
         public string FileName2 { get; private set; }
         public int StartLine2 { get; private set; }
         public int EndLine2 { get; private set; }
-
-        //private string _fileName1;
-        //public string FileName1
-        //{
-        //    get
-        //    {
-        //        return _fileName1;
-        //    }
-        //    set
-        //    {
-        //        _fileName1 = value;
-        //        OnPropertyChanged("FileName1");
-        //    }
-        //}
-        //private string _fileName2;
-        //public string FileName2
-        //{
-        //    get
-        //    {
-        //        return _fileName2;
-        //    }
-        //    set
-        //    {
-        //        _fileName2 = value;
-        //        OnPropertyChanged("FileName2");
-        //    }
-        //}
+        
         private string _code1;
         public string Code1
         {
