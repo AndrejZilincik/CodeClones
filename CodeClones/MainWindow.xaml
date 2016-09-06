@@ -100,6 +100,29 @@
                     <StatusBar Height="20" DockPanel.Dock="Bottom">
                         <TextBlock Text="{Binding CloneList.Count, StringFormat={}{0} clones found!}"/>
                     </StatusBar>
+                    <DockPanel DockPanel.Dock="Top" Name="SettingsPanel">
+                        <DockPanel.Resources>
+                            <Style TargetType="TextBox">
+                                <Setter Property="FontSize" Value="16"/>
+                                <Setter Property="Margin" Value="0,0,20,0"/>
+                            </Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="16"/>
+                                <Setter Property="Margin" Value="8,0,20,0"/>
+                            </Style>
+                        </DockPanel.Resources>
+                        <UniformGrid Rows="1" Columns="3">
+                            <DockPanel Grid.Column="1">
+                                <TextBlock>MinLines:</TextBlock>
+                                <TextBox Text="{Binding MinLines}"/>
+                            </DockPanel>
+                            <DockPanel Grid.Column="2">
+                                <TextBlock>MinTokens:</TextBlock>
+                                <TextBox Text="{Binding MinTokens}"/>
+                            </DockPanel>
+                            <Button Name="Update" FontSize="16" Height="Auto" Margin="20,0,8,0" Click="UpdateButton_Click">Update</Button>
+                        </UniformGrid>
+                    </DockPanel>
                     <UniformGrid Rows="1" Columns="2">
                         <UniformGrid.Resources>
                             <Style TargetType="TextBox">

@@ -7,10 +7,10 @@ namespace CodeClones
     public class CloneFinder
     {
         // Minimum length in lines to be considered a clone
-        static readonly int MinLines = 3;
+        private int MinLines = 3;
 
         // Minimum number of tokens to be considered a clone
-        static readonly int MinTokens = 5;
+        private int MinTokens = 5;
 
         // Filenames of the files being searched
         private string FileName1;
@@ -23,13 +23,16 @@ namespace CodeClones
         // Stores previously used identifier names
         Dictionary<string, string> Identifiers = new Dictionary<string, string>();
 
-        public CloneFinder(TokenList tokenList1, TokenList tokenList2)
+        public CloneFinder(TokenList tokenList1, TokenList tokenList2, int minLines, int minTokens)
         {
             this.FileName1 = tokenList1.FileName;
             this.TokenList1 = tokenList1.Tokens;
 
             this.FileName2 = tokenList2.FileName;
             this.TokenList2 = tokenList2.Tokens;
+
+            this.MinLines = minLines;
+            this.MinTokens = minTokens;
         }
 
         // Find clones in a pair of token lists

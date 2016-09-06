@@ -55,12 +55,38 @@ namespace CodeClones
                 OnPropertyChanged("CloneList");
             }
         }
-        
-        // PropertyChanged event
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged(string name)
+
+        private int _minLines = 3;
+        public int MinLines
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            get
+            {
+                return _minLines;
+            }
+            set
+            {
+                if (value > 0)
+                {
+                    _minLines = value;
+                    OnPropertyChanged("MinLines");
+                }
+            }
+        }
+        private int _minTokens = 5;
+        public int MinTokens
+        {
+            get
+            {
+                return _minTokens;
+            }
+            set
+            {
+                if (value > 0)
+                {
+                    _minTokens = value;
+                    OnPropertyChanged("MinTokens");
+                }
+            }
         }
 
         ScrollViewer scroll1;
@@ -70,25 +96,30 @@ namespace CodeClones
         {
             InitializeComponent();
             this.DataContext = this;
+
+            // Update AreTwoFilesLoaded when file list is modified
             FileList.CollectionChanged += (s, e) => { OnPropertyChanged("AreTwoFilesLoaded"); };
+
+            // Bind clone viewer textbox scroll bars
             this.Loaded += (s, e) =>
             {
                 scroll1 = (ScrollViewer)GetDescendantByType(Clones1, typeof(ScrollViewer));
                 scroll2 = (ScrollViewer)GetDescendantByType(Clones2, typeof(ScrollViewer));
             };
         }
-
+        
         // Setup and display open file dialog
-        private string OpenFile()
+        private IEnumerable<string> OpenFiles(bool multiSelect)
         {
             OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = multiSelect;
             ofd.Title = "Select a file to open...";
             ofd.DefaultExt = ".cpp";
             ofd.Filter = "C/C++ source files|*.cpp;*.hpp;*.c;*.h|All files|*.*";
 
             if (ofd.ShowDialog() == true)
             {
-                return ofd.FileName;
+                return ofd.FileNames;
             }
             else
             {
@@ -104,15 +135,18 @@ namespace CodeClones
             IEnumerable<string> lines2 = File.ReadLines(tokens2.FileName);
 
             // Get list of clones
-            CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2);
+            CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2, MinLines, MinTokens);
             List<Clone> clones = cloneFinder.FindClones();
 
             // Get relevant portions of source files
             foreach (Clone clone in clones)
             {
-                // TODO: Make both of these the same length
-                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(clone.EndLine1 - clone.StartLine1 + 1)) + Environment.NewLine;
-                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(clone.EndLine2 - clone.StartLine2 + 1)) + Environment.NewLine;
+                int length1 = clone.EndLine1 - clone.StartLine1;
+                int length2 = clone.EndLine2 - clone.StartLine2;
+                int pad1 = length2 > length1 ? length2 - length1 : 0;
+                int pad2 = length1 > length2 ? length1 - length2 : 0;
+                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(length1 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad1 + 1));
+                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(length2 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad2 + 1));
             }
 
             return clones;
@@ -140,7 +174,7 @@ namespace CodeClones
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // Select file
-            string fileName = OpenFile();
+            string fileName = OpenFiles(false).Single();
             if (fileName == null)
             {
                 return;
@@ -161,7 +195,7 @@ namespace CodeClones
         private void File2_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // Select file
-            string fileName = OpenFile();
+            string fileName = OpenFiles(false).Single();
             if (fileName == null)
             {
                 return;
@@ -196,30 +230,15 @@ namespace CodeClones
             TabBar.SelectedItem = ClonesTab;
         }
 
-        // Switch tab event handler
-        private void TabBar_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender != null && (sender as TabControl).SelectedItem as TabItem == ClonesTab)
-            {
-                // Find clones and populate clone list
-                CloneList = CompareManyTokenLists(FileList);
-            }
-        }
-
         // Add files to list of files to find clones in
         private void AddFiles_Click(object sender, RoutedEventArgs e)
         {
-            // Display open file dialog
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Multiselect = true;
-            ofd.Title = "Select files to add...";
-            ofd.DefaultExt = ".cpp";
-            ofd.Filter = "C/C++ source files|*.cpp;*.hpp;*.c;*.h|All files|*.*";
+            IEnumerable<string> fileNames = OpenFiles(true);
 
             // Add selected files
-            if (ofd.ShowDialog() == true)
+            if (fileNames != null)
             {
-                foreach (string file in ofd.FileNames)
+                foreach (string file in fileNames)
                 {
                     if (!FileList.Any(f => f.FileName == file))
                     {
@@ -244,8 +263,34 @@ namespace CodeClones
         {
             scroll1.ScrollToVerticalOffset(e.VerticalOffset);
         }
+        
+        // Switch tab event handler
+        private void TabBar_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender != null && (sender as TabControl).SelectedItem as TabItem == ClonesTab)
+            {
+                // Simulate go button click - Find clones and populate clone list
+                CloneList = CompareManyTokenLists(FileList);
+            }
+        }
+
+        // Update search settings - button click event handler
+        private void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Find clones
+            CloneList = CompareManyTokenLists(FileList);
+        }
+        #endregion
+
+        #region Generic helper methods
+        // PropertyChanged event
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged(string name)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
         // Needed to access list box scrolls
-        public Visual GetDescendantByType(Visual element, Type type)
+        private Visual GetDescendantByType(Visual element, Type type)
         {
             if (element == null) return null;
             if (element.GetType() == type) return element;
@@ -263,7 +308,6 @@ namespace CodeClones
             }
             return foundElement;
         }
-
         #endregion
     }
 }
