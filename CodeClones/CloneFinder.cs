@@ -77,7 +77,29 @@ namespace CodeClones
                                 (index2 + 1 >= TokenList2.Count || (line2 + MinLines < lineStartTokens2.Count && index2 >= lineStartTokens2[line2 + MinLines])) &&
                                 index1 - initIndex1 >= MinTokens)
                             {
-                                clones.Add(new Clone(FileName1, TokenList1[initIndex1].LineNumber, TokenList1[index1].LineNumber, FileName2, TokenList2[initIndex2].LineNumber, TokenList2[index2].LineNumber));
+                                int endLine1;
+                                int endLine2;
+
+                                // Last matching token is at end of line
+                                if (index1 + 1 >= TokenList1.Count || TokenList1[index1].LineNumber != TokenList1[index1 + 1].LineNumber)
+                                {
+                                    endLine1 = TokenList1[index1].LineNumber;
+                                }
+                                else
+                                {
+                                    endLine1 = TokenList1[index1].LineNumber - 1;
+                                }
+                                if (index2 + 1 >= TokenList2.Count || TokenList2[index2].LineNumber != TokenList2[index2 + 1].LineNumber)
+                                {
+                                    endLine2 = TokenList2[index2].LineNumber;
+                                }
+                                else
+                                {
+                                    endLine2 = TokenList2[index2].LineNumber - 1;
+                                }
+
+                                // Add clone to clone list
+                                clones.Add(new Clone(FileName1, TokenList1[initIndex1].LineNumber, endLine1, FileName2, TokenList2[initIndex2].LineNumber, endLine2));
                             }
                         }
                     }

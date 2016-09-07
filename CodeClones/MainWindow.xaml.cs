@@ -56,7 +56,7 @@ namespace CodeClones
             }
         }
 
-        private int _minLines = 3;
+        private int _minLines = 5;
         public int MinLines
         {
             get
