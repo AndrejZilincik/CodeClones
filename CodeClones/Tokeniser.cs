@@ -59,7 +59,7 @@ namespace CodeClones
             if (str.Length > 0)
             {
                 // Add token to token list
-                TokenType type = KEYWORDS.Contains(str) ? TokenType.Keyword : TokenType.Identifier;
+                TokenType type = char.IsDigit(str[0]) ? TokenType.Literal : KEYWORDS.Contains(str) ? TokenType.Keyword : TokenType.Identifier;
                 tokenList.Add(new Token(type, str, lineNumber));
             }
         }

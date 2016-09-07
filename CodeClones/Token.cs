@@ -1,6 +1,6 @@
 ﻿namespace CodeClones
 {
-    public enum TokenType { Keyword, Identifier, Symbol }
+    public enum TokenType { Keyword, Identifier, Literal, Symbol }
 
     public class Token
     {

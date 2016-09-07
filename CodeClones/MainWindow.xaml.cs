@@ -72,7 +72,7 @@ namespace CodeClones
                 }
             }
         }
-        private int _minTokens = 5;
+        private int _minTokens = 10;
         public int MinTokens
         {
             get
@@ -174,7 +174,7 @@ namespace CodeClones
         private void File1_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // Select file
-            string fileName = OpenFiles(false).Single();
+            string fileName = OpenFiles(false)?.Single();
             if (fileName == null)
             {
                 return;
@@ -195,7 +195,7 @@ namespace CodeClones
         private void File2_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // Select file
-            string fileName = OpenFiles(false).Single();
+            string fileName = OpenFiles(false)?.Single();
             if (fileName == null)
             {
                 return;
