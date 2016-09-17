@@ -32,12 +32,12 @@ namespace CodeClones
             }
         }
 
-        // Check whether two files are loaded
-        public bool AreTwoFilesLoaded
+        // Check whether a file is loaded
+        public bool IsFileLoaded
         {
             get
             {
-                return FileList.Count >= 2;
+                return FileList.Count >= 1;
             }
         }
         
@@ -97,8 +97,8 @@ namespace CodeClones
             InitializeComponent();
             this.DataContext = this;
 
-            // Update AreTwoFilesLoaded when file list is modified
-            FileList.CollectionChanged += (s, e) => { OnPropertyChanged("AreTwoFilesLoaded"); };
+            // Update IsFileLoaded when file list is modified
+            FileList.CollectionChanged += (s, e) => { OnPropertyChanged("IsFileLoaded"); };
 
             // Bind clone viewer textbox scroll bars
             this.Loaded += (s, e) =>
@@ -160,7 +160,7 @@ namespace CodeClones
             // Compare each token list with all token lists after it
             foreach (TokenList tokens1 in tokenLists)
             {
-                foreach(TokenList tokens2 in tokenLists.SkipWhile(t => !t.Tokens.SequenceEqual(tokens1.Tokens)).Skip(1))
+                foreach(TokenList tokens2 in tokenLists.SkipWhile(t => !t.Tokens.SequenceEqual(tokens1.Tokens)))
                 {
                     clones.AddRange(CompareTokenLists(tokens1, tokens2));
                 }
@@ -221,7 +221,7 @@ namespace CodeClones
         // About menu item click event handler
         private void About_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Code Clone Finder v0.1\n© 2016 Andrej Zilincik", "About");
+            MessageBox.Show("Code Clone Finder v0.1\n© 2016 Andrej Zilincik, et al.", "About");
         }
 
         // Find clones button click event handler

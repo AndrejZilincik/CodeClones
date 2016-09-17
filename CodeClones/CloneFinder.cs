@@ -48,6 +48,12 @@ namespace CodeClones
             {
                 for (int line2 = 0; line2 + MinLines - 1 < lineStartTokens2.Count; line2++)
                 {
+                    // If comparing a file to itself, ignore clones that start at the same point in the file, and remove duplicates
+                    if (FileName1 == FileName2 && line1 >= line2)
+                    {
+                        continue;
+                    }
+
                     int initIndex1 = lineStartTokens1[line1];
                     int initIndex2 = lineStartTokens2[line2];
                     int index1 = lineStartTokens1[line1];

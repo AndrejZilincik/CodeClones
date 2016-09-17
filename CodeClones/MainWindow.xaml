@@ -28,7 +28,7 @@
         <TabControl Name="TabBar" SelectionChanged="TabBar_SelectionChanged">
             <TabItem Header="Files">
                 <DockPanel>
-                    <Button DockPanel.Dock="Bottom" Height="50" FontSize="24" IsEnabled="{Binding AreTwoFilesLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
+                    <Button DockPanel.Dock="Bottom" Height="50" FontSize="24" IsEnabled="{Binding IsFileLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
                     <UniformGrid Rows="1" Columns="2">
                         <Border Style="{StaticResource DarkGrayBorder}">
                             <DockPanel Grid.Column="1">
@@ -91,11 +91,11 @@
                         <Button Grid.Column="1" Click="AddFiles_Click" Content="Add files"/>
                         <Button Grid.Column="2" Click="ClearFiles_Click" Content="Clear list"/>
                     </UniformGrid>
-                    <Button DockPanel.Dock="Bottom" IsEnabled="{Binding AreTwoFilesLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
+                    <Button DockPanel.Dock="Bottom" IsEnabled="{Binding IsFileLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
                     <ListBox ItemsSource="{Binding FileList}" DisplayMemberPath="FileName"/>
                 </DockPanel>
             </TabItem>
-            <TabItem Name="ClonesTab" IsEnabled="{Binding AreTwoFilesLoaded}" Header="Clones">
+            <TabItem Name="ClonesTab" IsEnabled="{Binding IsFileLoaded}" Header="Clones">
                 <DockPanel>
                     <StatusBar Height="20" DockPanel.Dock="Bottom">
                         <TextBlock Text="{Binding CloneList.Count, StringFormat={}{0} clones found!}"/>
