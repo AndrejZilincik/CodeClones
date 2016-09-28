@@ -31,7 +31,6 @@ namespace CodeClones
                 OnPropertyChanged("FileList");
             }
         }
-
         // Check whether a file is loaded
         public bool IsFileLoaded
         {
@@ -40,7 +39,6 @@ namespace CodeClones
                 return FileList.Count >= 1;
             }
         }
-        
         // List of code clones
         private List<Clone> _cloneList = new List<Clone>();
         public List<Clone> CloneList
@@ -55,7 +53,9 @@ namespace CodeClones
                 OnPropertyChanged("CloneList");
             }
         }
-
+        // Clone cache
+        private CloneCache cloneCache = new CloneCache();
+        // Minimum clone size in lines
         private int _minLines = 5;
         public int MinLines
         {
@@ -72,6 +72,7 @@ namespace CodeClones
                 }
             }
         }
+        // Minimum clone size in tokens
         private int _minTokens = 10;
         public int MinTokens
         {
@@ -88,7 +89,7 @@ namespace CodeClones
                 }
             }
         }
-
+        // Clone viewer textbox scrollbars
         ScrollViewer scroll1;
         ScrollViewer scroll2;
 
@@ -96,11 +97,11 @@ namespace CodeClones
         {
             InitializeComponent();
             this.DataContext = this;
-
+            
             // Update IsFileLoaded when file list is modified
             FileList.CollectionChanged += (s, e) => { OnPropertyChanged("IsFileLoaded"); };
 
-            // Bind clone viewer textbox scroll bars
+            // Bind clone viewer textbox scrollbars
             this.Loaded += (s, e) =>
             {
                 scroll1 = (ScrollViewer)GetDescendantByType(Clones1, typeof(ScrollViewer));
@@ -136,13 +137,20 @@ namespace CodeClones
                 return new List<Clone>();
             }
 
+            // Try to read clone list from cache
+            List<Clone> clones = cloneCache.TryGet(tokens1.FileName, tokens2.FileName, MinLines, MinTokens);
+            if (clones != null)
+            {
+                return clones;
+            }
+
             // Read source files, separated into individual lines
             IEnumerable<string> lines1 = File.ReadLines(tokens1.FileName);
             IEnumerable<string> lines2 = File.ReadLines(tokens2.FileName);
 
             // Get list of clones
             CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2, MinLines, MinTokens);
-            List<Clone> clones = cloneFinder.FindClones();
+            clones = cloneFinder.FindClones();
 
             // Get relevant portions of source files
             foreach (Clone clone in clones)
@@ -154,6 +162,9 @@ namespace CodeClones
                 clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(length1 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad1 + 1));
                 clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(length2 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad2 + 1));
             }
+
+            // Store clone list in cache
+            cloneCache.AddEntry(tokens1.FileName, tokens2.FileName, MinLines, MinTokens, clones);
 
             return clones;
         }
