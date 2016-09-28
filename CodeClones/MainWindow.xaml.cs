@@ -130,6 +130,12 @@ namespace CodeClones
         // Compare token lists, create clone list
         private List<Clone> CompareTokenLists(TokenList tokens1, TokenList tokens2)
         {
+            // Make sure files exist
+            if (!File.Exists(tokens1.FileName) || !File.Exists(tokens2.FileName))
+            {
+                return new List<Clone>();
+            }
+
             // Read source files, separated into individual lines
             IEnumerable<string> lines1 = File.ReadLines(tokens1.FileName);
             IEnumerable<string> lines2 = File.ReadLines(tokens2.FileName);
@@ -235,15 +241,18 @@ namespace CodeClones
         {
             IEnumerable<string> fileNames = OpenFiles(true);
 
-            // Add selected files
-            if (fileNames != null)
+            // No files selected
+            if (fileNames == null)
             {
-                foreach (string file in fileNames)
+                return;
+            }
+
+            // Add all selected files if not already in list
+            foreach (string file in fileNames)
+            {
+                if (!FileList.Any(f => f.FileName == file))
                 {
-                    if (!FileList.Any(f => f.FileName == file))
-                    {
-                        FileList.Add(new TokenList(file));
-                    }
+                    FileList.Add(new TokenList(file));
                 }
             }
         }
