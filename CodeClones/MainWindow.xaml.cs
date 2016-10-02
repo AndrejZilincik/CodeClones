@@ -55,6 +55,8 @@ namespace CodeClones
         }
         // Clone cache
         private CloneCache cloneCache = new CloneCache();
+        // File content cache
+        private Dictionary<string, IEnumerable<string>> fileContents = new Dictionary<string, IEnumerable<string>>();
         // Minimum clone size in lines
         private int _minLines = 5;
         public int MinLines
@@ -144,23 +146,24 @@ namespace CodeClones
                 return clones;
             }
 
-            // Read source files, separated into individual lines
-            IEnumerable<string> lines1 = File.ReadLines(tokens1.FileName);
-            IEnumerable<string> lines2 = File.ReadLines(tokens2.FileName);
-
             // Get list of clones
             CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2, MinLines, MinTokens);
             clones = cloneFinder.FindClones();
 
-            // Get relevant portions of source files
+            // Get actual code segments
             foreach (Clone clone in clones)
             {
+                // Calculate number of padding lines needed to make both clones the same length
                 int length1 = clone.EndLine1 - clone.StartLine1;
                 int length2 = clone.EndLine2 - clone.StartLine2;
                 int pad1 = length2 > length1 ? length2 - length1 : 0;
                 int pad2 = length1 > length2 ? length1 - length2 : 0;
-                clone.Code1 = string.Join(Environment.NewLine, lines1.Skip(clone.StartLine1 - 1).Take(length1 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad1 + 1));
-                clone.Code2 = string.Join(Environment.NewLine, lines2.Skip(clone.StartLine2 - 1).Take(length2 + 1)) + string.Concat(Enumerable.Repeat(Environment.NewLine, pad2 + 1));
+
+                // Get relevant portions of source files, add padding lines
+                clone.Code1 = string.Join(Environment.NewLine, fileContents[tokens1.FileName].Skip(clone.StartLine1 - 1).Take(length1 + 1));
+                clone.Code2 = string.Join(Environment.NewLine, fileContents[tokens2.FileName].Skip(clone.StartLine2 - 1).Take(length2 + 1));
+                clone.Code1 += string.Concat(Enumerable.Repeat(Environment.NewLine, pad1 + 1));
+                clone.Code2 += string.Concat(Enumerable.Repeat(Environment.NewLine, pad2 + 1));
             }
 
             // Store clone list in cache
@@ -169,9 +172,15 @@ namespace CodeClones
             return clones;
         }
 
-        // Compare two or more token lists with each other
+        // Compare set of lists with each other
         private List<Clone> CompareManyTokenLists(IEnumerable<TokenList> tokenLists)
         {
+            // Store contents of files being compared
+            foreach (TokenList tokens in tokenLists)
+            {
+                fileContents.Add(tokens.FileName, File.ReadLines(tokens.FileName));
+            }
+
             List<Clone> clones = new List<Clone>();
 
             // Compare each token list with all token lists after it
@@ -182,6 +191,9 @@ namespace CodeClones
                     clones.AddRange(CompareTokenLists(tokens1, tokens2));
                 }
             }
+
+            // Clear file content cache
+            fileContents.Clear();
 
             return clones;
         }

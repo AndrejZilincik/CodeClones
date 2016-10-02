@@ -137,16 +137,22 @@ namespace CodeClones
         // Compare tokens
         private bool CompareTokens(Token token1, Token token2)
         {
+            // Tokens are not the same if their type does not match
             if (token1.Type != token2.Type)
             {
-                // Tokens are not the same if their type does not match
                 return false;
             }
+            // Ignore clones containing include statements
             else if (token1.Value == "include")
             {
-                // Ignore clones containing include statements
                 return false;
             }
+            // Ignore clones containing include statements
+            else if (token1.Value == "define")
+            {
+                return false;
+            }
+            // Compare identifiers
             else if (token1.Type == TokenType.Identifier)
             {
                 if (Identifiers.ContainsKey(token1.Value))
@@ -161,9 +167,9 @@ namespace CodeClones
                     return true;
                 }
             }
+            // Compare non-identifier tokens
             else
             {
-                // Compare token values
                 return token1.Value == token2.Value;
             }
         }
