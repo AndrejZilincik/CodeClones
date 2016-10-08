@@ -58,6 +58,7 @@
     <Compile Include="CloneCache.cs" />
     <Compile Include="CloneFinder.cs" />
     <Compile Include="Clone.cs" />
+    <Compile Include="CloneSearchParameters.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="TokenList.cs" />
     <Compile Include="Tokeniser.cs" />

@@ -17,15 +17,15 @@ namespace CodeClones
         }
 
         // Add entry to table
-        public void AddEntry(string fileName1, string fileName2, int minLines, int minTokens, List<Clone> clones)
+        public void AddEntry(string fileName1, string fileName2, CloneSearchParameters searchParameters, List<Clone> clones)
         {
-            table.Add(GetHash(fileName1, fileName2, minLines, minTokens), clones);
+            table.Add(GetHash(fileName1, fileName2, searchParameters), clones);
         }
 
         // Check table for entry matching given filenames
-        public List<Clone> TryGet(string fileName1, string fileName2, int minLines, int minTokens)
+        public List<Clone> TryGet(string fileName1, string fileName2, CloneSearchParameters searchParameters)
         {
-            string key = GetHash(fileName1, fileName2, minLines, minTokens);
+            string key = GetHash(fileName1, fileName2, searchParameters);
             if (table.ContainsKey(key))
             {
                 return table[key];
@@ -49,7 +49,7 @@ namespace CodeClones
         }
 
         // Get hash representing pair of files
-        private string GetHash(string fileName1, string fileName2, int minLines, int minTokens)
+        private string GetHash(string fileName1, string fileName2, CloneSearchParameters searchParameters)
         {
             byte[] hash1;
             byte[] hash2;
@@ -68,7 +68,11 @@ namespace CodeClones
                     hash2 = md5.ComputeHash(fs);
                 }
                 // Combine hashes and min clone length data into single hash
-                byte[] comb = hash1.Concat(hash2).Concat(BitConverter.GetBytes(minLines)).Concat(BitConverter.GetBytes(minTokens)).ToArray();
+                byte[] comb = hash1.Concat(hash2)
+                    .Concat(BitConverter.GetBytes(searchParameters.MinLines))
+                    .Concat(BitConverter.GetBytes(searchParameters.MinTokens))
+                    .Concat(BitConverter.GetBytes(searchParameters.PercentMatch))
+                    .ToArray();
                 hash = md5.ComputeHash(comb);
             }
 

@@ -28,6 +28,16 @@
         <TabControl Name="TabBar" SelectionChanged="TabBar_SelectionChanged">
             <TabItem Header="Files">
                 <DockPanel>
+                    <UniformGrid DockPanel.Dock="Top" Columns="2" Rows="1">
+                        <Button Grid.Column="1" Click="AddFiles_Click" Content="Add files"/>
+                        <Button Grid.Column="2" Click="ClearFiles_Click" Content="Clear list"/>
+                    </UniformGrid>
+                    <Button DockPanel.Dock="Bottom" IsEnabled="{Binding IsFileLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
+                    <ListBox ItemsSource="{Binding FileList}" DisplayMemberPath="FileName"/>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Tokens">
+                <DockPanel>
                     <Button DockPanel.Dock="Bottom" Height="50" FontSize="24" IsEnabled="{Binding IsFileLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
                     <UniformGrid Rows="1" Columns="2">
                         <Border Style="{StaticResource DarkGrayBorder}">
@@ -85,16 +95,6 @@
                     </UniformGrid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Batch">
-                <DockPanel>
-                    <UniformGrid DockPanel.Dock="Top" Columns="2" Rows="1">
-                        <Button Grid.Column="1" Click="AddFiles_Click" Content="Add files"/>
-                        <Button Grid.Column="2" Click="ClearFiles_Click" Content="Clear list"/>
-                    </UniformGrid>
-                    <Button DockPanel.Dock="Bottom" IsEnabled="{Binding IsFileLoaded, Mode=OneWay}" Click="FindClones_Click" Content="Find clones!"/>
-                    <ListBox ItemsSource="{Binding FileList}" DisplayMemberPath="FileName"/>
-                </DockPanel>
-            </TabItem>
             <TabItem Name="ClonesTab" IsEnabled="{Binding IsFileLoaded}" Header="Clones">
                 <DockPanel>
                     <StatusBar Height="20" DockPanel.Dock="Bottom">
@@ -103,25 +103,33 @@
                     <DockPanel DockPanel.Dock="Top" Name="SettingsPanel">
                         <DockPanel.Resources>
                             <Style TargetType="TextBox">
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
                                 <Setter Property="FontSize" Value="16"/>
-                                <Setter Property="Margin" Value="0,0,20,0"/>
+                                <Setter Property="Margin" Value="0,0,16,0"/>
+                                <Setter Property="Width" Value="40"/>
                             </Style>
                             <Style TargetType="TextBlock">
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
                                 <Setter Property="FontSize" Value="16"/>
-                                <Setter Property="Margin" Value="8,0,20,0"/>
+                                <Setter Property="Margin" Value="8,0,8,0"/>
                             </Style>
                         </DockPanel.Resources>
-                        <UniformGrid Rows="1" Columns="3">
-                            <DockPanel Grid.Column="1">
-                                <TextBlock>MinLines:</TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <DockPanel Grid.Column="0">
+                                <TextBlock>Min Lines:</TextBlock>
                                 <TextBox Text="{Binding MinLines}"/>
-                            </DockPanel>
-                            <DockPanel Grid.Column="2">
-                                <TextBlock>MinTokens:</TextBlock>
+                                <TextBlock>Min Tokens:</TextBlock>
                                 <TextBox Text="{Binding MinTokens}"/>
+                                <TextBlock>Percent Match:</TextBlock>
+                                <TextBox DockPanel.Dock="Right" Text="{Binding PercentMatch}"/>
+                                <Slider Margin="0,4,8,4" Minimum="50" Maximum="100" Value="{Binding PercentMatch}" IsSnapToTickEnabled="True" TickFrequency="5" IsMoveToPointEnabled="True"/>
                             </DockPanel>
-                            <Button Name="Update" FontSize="16" Height="Auto" Margin="20,0,8,0" Click="UpdateButton_Click">Update</Button>
-                        </UniformGrid>
+                            <Button Grid.Column="1" Name="Update" FontSize="16" Height="Auto" Margin="8,0,8,0" Click="UpdateButton_Click">Update</Button>
+                        </Grid>
                     </DockPanel>
                     <UniformGrid Rows="1" Columns="2">
                         <UniformGrid.Resources>

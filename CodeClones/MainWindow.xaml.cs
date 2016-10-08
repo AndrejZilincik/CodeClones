@@ -57,40 +57,55 @@ namespace CodeClones
         private CloneCache cloneCache = new CloneCache();
         // File content cache
         private Dictionary<string, IEnumerable<string>> fileContents = new Dictionary<string, IEnumerable<string>>();
-        // Minimum clone size in lines
-        private int _minLines = 5;
+
+        // Clone search parameters
+        private CloneSearchParameters SearchParameters = new CloneSearchParameters(minLines: 5, minTokens: 10, percentMatch: 80);
         public int MinLines
         {
             get
             {
-                return _minLines;
+                return SearchParameters.MinLines;
             }
             set
             {
                 if (value > 0)
                 {
-                    _minLines = value;
+                    SearchParameters.MinLines = value;
                     OnPropertyChanged("MinLines");
                 }
             }
         }
-        // Minimum clone size in tokens
-        private int _minTokens = 10;
         public int MinTokens
         {
             get
             {
-                return _minTokens;
+                return SearchParameters.MinTokens;
             }
             set
             {
                 if (value > 0)
                 {
-                    _minTokens = value;
+                    SearchParameters.MinTokens = value;
                     OnPropertyChanged("MinTokens");
                 }
             }
         }
+        public double PercentMatch
+        {
+            get
+            {
+                return SearchParameters.PercentMatch;
+            }
+            set
+            {
+                if (value >= 50 && value <= 100)
+                {
+                    SearchParameters.PercentMatch = value;
+                    OnPropertyChanged("PercentMatch");
+                }
+            }
+        }
+
         // Clone viewer textbox scrollbars
         ScrollViewer scroll1;
         ScrollViewer scroll2;
@@ -140,14 +155,14 @@ namespace CodeClones
             }
 
             // Try to read clone list from cache
-            List<Clone> clones = cloneCache.TryGet(tokens1.FileName, tokens2.FileName, MinLines, MinTokens);
+            List<Clone> clones = cloneCache.TryGet(tokens1.FileName, tokens2.FileName, SearchParameters);
             if (clones != null)
             {
                 return clones;
             }
 
             // Get list of clones
-            CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2, MinLines, MinTokens);
+            CloneFinder cloneFinder = new CloneFinder(tokens1, tokens2, SearchParameters);
             clones = cloneFinder.FindClones();
 
             // Get actual code segments
@@ -167,7 +182,7 @@ namespace CodeClones
             }
 
             // Store clone list in cache
-            cloneCache.AddEntry(tokens1.FileName, tokens2.FileName, MinLines, MinTokens, clones);
+            cloneCache.AddEntry(tokens1.FileName, tokens2.FileName, SearchParameters, clones);
 
             return clones;
         }

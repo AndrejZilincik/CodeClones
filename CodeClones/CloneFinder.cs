@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CodeClones
@@ -6,10 +7,13 @@ namespace CodeClones
     public class CloneFinder
     {
         // Minimum length in lines to be considered a clone
-        private int MinLines = 3;
+        private int MinLines;
 
         // Minimum number of tokens to be considered a clone
-        private int MinTokens = 5;
+        private int MinTokens;
+
+        // Percentage of tokens that need to match to be considered a clone
+        public double MatchThreshold;
 
         // Filenames of the files being searched
         private string FileName1;
@@ -19,10 +23,13 @@ namespace CodeClones
         private List<Token> TokenList1;
         private List<Token> TokenList2;
 
+        // List of found clones
+        List<Clone> Clones;
+
         // Stores previously used identifier names
         Dictionary<string, string> Identifiers = new Dictionary<string, string>();
-
-        public CloneFinder(TokenList tokenList1, TokenList tokenList2, int minLines, int minTokens)
+        
+        public CloneFinder(TokenList tokenList1, TokenList tokenList2, CloneSearchParameters searchParameters)
         {
             this.FileName1 = tokenList1.FileName;
             this.TokenList1 = tokenList1.Tokens;
@@ -30,92 +37,107 @@ namespace CodeClones
             this.FileName2 = tokenList2.FileName;
             this.TokenList2 = tokenList2.Tokens;
 
-            this.MinLines = minLines;
-            this.MinTokens = minTokens;
+            this.MinLines = searchParameters.MinLines;
+            this.MinTokens = searchParameters.MinTokens;
+            this.MatchThreshold = searchParameters.PercentMatch / 100;
         }
 
         // Find clones in a pair of token lists
         public List<Clone> FindClones()
         {
-            List<Clone> clones = new List<Clone>();
+            Clones = new List<Clone>();
 
-            // Get indexes of all tokens at the start of a line
-            List<int> lineStartTokens1 = GetLineStartTokens(TokenList1);
-            List<int> lineStartTokens2 = GetLineStartTokens(TokenList2);
-
-            // Starting at each pair of these tokens, compare tokens in both lists until tokens do not match
-            for (int line1 = 0; line1 + MinLines - 1 < lineStartTokens1.Count; line1++)
+            // Get token from each list
+            foreach (int index1 in GetLineStartTokens(TokenList1))
             {
-                for (int line2 = 0; line2 + MinLines - 1 < lineStartTokens2.Count; line2++)
+                foreach (int index2 in GetLineStartTokens(TokenList2))
                 {
-                    // If comparing a file to itself, ignore clones that start at the same point in the file, and remove duplicates
-                    if (FileName1 == FileName2 && line1 >= line2)
+                    // If comparing a file to itself, ignore clones that start at the same point in the file and remove duplicates
+                    if (FileName1 == FileName2 && index1 >= index2)
                     {
                         continue;
                     }
 
-                    int initIndex1 = lineStartTokens1[line1];
-                    int initIndex2 = lineStartTokens2[line2];
-                    int index1 = lineStartTokens1[line1];
-                    int index2 = lineStartTokens2[line2];
-
-                    // Compare tokens at beginning of line
-                    if (CompareTokens(TokenList1[index1], TokenList2[index2]))
+                    // Ignore clones that overlap with another clone
+                    if (OverlapsWithClone(index1, index2))
                     {
-                        // Check if clone overlaps with another clone
-                        if (!clones.Any(c => c.StartLine1 <= TokenList1[index1].LineNumber && c.EndLine1 >= TokenList1[index1].LineNumber &&
-                                             c.StartLine2 <= TokenList2[index2].LineNumber && c.EndLine2 >= TokenList2[index2].LineNumber))
-                        {
+                        continue;
+                    }
 
-                            // Keep comparing tokens until they no longer match
-                            while (index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count && CompareTokens(TokenList1[index1 + 1], TokenList2[index2 + 1]))
-                            {
-                                // Move to next token
-                                index1++;
-                                index2++;
-                            }
-
-                            // Empty list of stored identifiers
-                            Identifiers.Clear();
-
-                            // If clone is long enough, add it to the clone list
-                            if ((index1 + 1 >= TokenList1.Count || (line1 + MinLines < lineStartTokens1.Count && index1 >= lineStartTokens1[line1 + MinLines])) &&
-                                (index2 + 1 >= TokenList2.Count || (line2 + MinLines < lineStartTokens2.Count && index2 >= lineStartTokens2[line2 + MinLines])) &&
-                                index1 - initIndex1 >= MinTokens)
-                            {
-                                int endLine1;
-                                int endLine2;
-
-                                // Last matching token is at end of line
-                                if (index1 + 1 >= TokenList1.Count || TokenList1[index1].LineNumber != TokenList1[index1 + 1].LineNumber)
-                                {
-                                    endLine1 = TokenList1[index1].LineNumber;
-                                }
-                                else
-                                {
-                                    endLine1 = TokenList1[index1].LineNumber - 1;
-                                }
-                                if (index2 + 1 >= TokenList2.Count || TokenList2[index2].LineNumber != TokenList2[index2 + 1].LineNumber)
-                                {
-                                    endLine2 = TokenList2[index2].LineNumber;
-                                }
-                                else
-                                {
-                                    endLine2 = TokenList2[index2].LineNumber - 1;
-                                }
-
-                                // Add clone to clone list
-                                clones.Add(new Clone(FileName1, TokenList1[initIndex1].LineNumber, endLine1, FileName2, TokenList2[initIndex2].LineNumber, endLine2));
-                            }
-                        }
+                    // Check for clones starting at that position
+                    Clone clone = FindCloneAt(index1, index2);
+                    if (clone != null)
+                    {
+                        Clones.Add(clone);
                     }
                 }
             }
 
-            return clones;
+            return Clones;
         }
 
-        // Given a token list, return first token in each line
+        // Check if there is already a clone which includes the specified tokens
+        private bool OverlapsWithClone(int index1, int index2)
+        {
+            return Clones.Any(c => c.StartLine1 <= TokenList1[index1].LineNumber && c.EndLine1 >= TokenList1[index1].LineNumber &&
+                                   c.StartLine2 <= TokenList2[index2].LineNumber && c.EndLine2 >= TokenList2[index2].LineNumber);
+        }
+
+        // Try to find clone starting at specified indices
+        public Clone FindCloneAt(int initIndex1, int initIndex2)
+        {
+            // Compare tokens at starting indices
+            if (!CompareTokens(TokenList1[initIndex1], TokenList2[initIndex2]))
+            {
+                return null;
+            }
+            double matches = 1;
+
+            // Initialise token pointers
+            int index1 = initIndex1 + 1;
+            int index2 = initIndex2 + 1;
+            int lastMatching1 = initIndex1;
+            int lastMatching2 = initIndex2;
+
+            // Keep comparing tokens until the percentage of matching tokens is below the specified threshold or there are no tokens left
+            while (matches / (index1 - initIndex1) >= MatchThreshold && index1 + 1 < TokenList1.Count && index2 + 1 < TokenList2.Count)
+            {
+                // Move to next tokens
+                index1++;
+                index2++;
+
+                // Compare tokens
+                if (CompareTokens(TokenList1[index1], TokenList2[index2]))
+                {
+                    matches++;
+                    lastMatching1 = index1;
+                    lastMatching2 = index2;
+                }
+            }
+
+            // Empty list of stored identifiers
+            Identifiers.Clear();
+
+            // If clone is long enough, add it to the clone list
+            if (LongEnough(initIndex1, index1, initIndex2, index2))
+            {
+                return new Clone(FileName1, TokenList1[initIndex1].LineNumber, TokenList1[lastMatching1].LineNumber, FileName2, TokenList2[initIndex2].LineNumber, TokenList2[lastMatching2].LineNumber);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        // Check if clone meets the minimum length requirements
+        private bool LongEnough(int initIndex1, int index1, int initIndex2, int index2)
+        {
+            return index1 - initIndex1 >= MinTokens && index2 - initIndex2 >= MinTokens &&
+                TokenList1[index1].LineNumber - TokenList1[initIndex1].LineNumber > MinLines &&
+                TokenList2[index2].LineNumber - TokenList2[initIndex2].LineNumber > MinLines;
+        }
+
+        // Given a token list, return a list containing the first token in each line
         private List<int> GetLineStartTokens(List<Token> tokenList)
         {
             List<int> lineStartTokens = new List<int>();
