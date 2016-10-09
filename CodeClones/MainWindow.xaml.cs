@@ -90,18 +90,18 @@ namespace CodeClones
                 }
             }
         }
-        public double PercentMatch
+        public double MinPercentMatch
         {
             get
             {
-                return SearchParameters.PercentMatch;
+                return SearchParameters.MinPercentMatch;
             }
             set
             {
                 if (value >= 50 && value <= 100)
                 {
-                    SearchParameters.PercentMatch = value;
-                    OnPropertyChanged("PercentMatch");
+                    SearchParameters.MinPercentMatch = value;
+                    OnPropertyChanged("MinPercentMatch");
                 }
             }
         }
@@ -209,8 +209,8 @@ namespace CodeClones
 
             // Clear file content cache
             fileContents.Clear();
-
-            return clones;
+            
+            return clones.OrderByDescending(c => c.PercentMatch).ToList();
         }
 
         #region UI Element Event Handlers

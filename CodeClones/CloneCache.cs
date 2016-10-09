@@ -71,7 +71,7 @@ namespace CodeClones
                 byte[] comb = hash1.Concat(hash2)
                     .Concat(BitConverter.GetBytes(searchParameters.MinLines))
                     .Concat(BitConverter.GetBytes(searchParameters.MinTokens))
-                    .Concat(BitConverter.GetBytes(searchParameters.PercentMatch))
+                    .Concat(BitConverter.GetBytes(searchParameters.MinPercentMatch))
                     .ToArray();
                 hash = md5.ComputeHash(comb);
             }

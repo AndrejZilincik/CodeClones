@@ -1,19 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace CodeClones
 {
+    // Finds clones by comparing a pair of token lists
     public class CloneFinder
     {
         // Minimum length in lines to be considered a clone
         private int MinLines;
-
         // Minimum number of tokens to be considered a clone
         private int MinTokens;
-
         // Percentage of tokens that need to match to be considered a clone
-        public double MatchThreshold;
+        private double MatchThreshold;
+        // Ignore clones containing include keyword
+        private bool IgnoreInclude = true;
+        // Ignore clones containing define keyword
+        private bool IgnoreDefine = true;
+        // Ignore clones containing typedef keyword
+        private bool IgnoreTypedef = true;
 
         // Filenames of the files being searched
         private string FileName1;
@@ -39,10 +43,10 @@ namespace CodeClones
 
             this.MinLines = searchParameters.MinLines;
             this.MinTokens = searchParameters.MinTokens;
-            this.MatchThreshold = searchParameters.PercentMatch / 100;
+            this.MatchThreshold = searchParameters.MinPercentMatch / 100;
         }
 
-        // Find clones in a pair of token lists
+        // Find clones in the token lists
         public List<Clone> FindClones()
         {
             Clones = new List<Clone>();
@@ -87,7 +91,8 @@ namespace CodeClones
         public Clone FindCloneAt(int initIndex1, int initIndex2)
         {
             // Compare tokens at starting indices
-            if (!CompareTokens(TokenList1[initIndex1], TokenList2[initIndex2]))
+            TokenComparisonResult comp = CompareTokens(TokenList1[initIndex1], TokenList2[initIndex2]);
+            if (comp != TokenComparisonResult.Matching)
             {
                 return null;
             }
@@ -107,8 +112,15 @@ namespace CodeClones
                 index2++;
 
                 // Compare tokens
-                if (CompareTokens(TokenList1[index1], TokenList2[index2]))
+                comp = CompareTokens(TokenList1[index1], TokenList2[index2]);
+                if (comp == TokenComparisonResult.Ignore)
                 {
+                    // Stop comparing
+                    break;
+                }
+                else if (comp == TokenComparisonResult.Matching)
+                {
+                    // Tokens match
                     matches++;
                     lastMatching1 = index1;
                     lastMatching2 = index2;
@@ -121,7 +133,8 @@ namespace CodeClones
             // If clone is long enough, add it to the clone list
             if (LongEnough(initIndex1, index1, initIndex2, index2))
             {
-                return new Clone(FileName1, TokenList1[initIndex1].LineNumber, TokenList1[lastMatching1].LineNumber, FileName2, TokenList2[initIndex2].LineNumber, TokenList2[lastMatching2].LineNumber);
+                int matchPercentage = (int)(100 * matches / (lastMatching1 - initIndex1));
+                return new Clone(FileName1, TokenList1[initIndex1].LineNumber, TokenList1[lastMatching1].LineNumber, FileName2, TokenList2[initIndex2].LineNumber, TokenList2[lastMatching2].LineNumber, matchPercentage);
             }
             else
             {
@@ -156,23 +169,30 @@ namespace CodeClones
             return lineStartTokens;
         }
 
+        private enum TokenComparisonResult { Ignore, Different, Matching }
+
         // Compare tokens
-        private bool CompareTokens(Token token1, Token token2)
+        private TokenComparisonResult CompareTokens(Token token1, Token token2)
         {
             // Tokens are not the same if their type does not match
             if (token1.Type != token2.Type)
             {
-                return false;
+                return TokenComparisonResult.Different;
             }
-            // Ignore clones containing include statements
-            else if (token1.Value == "include")
+            // Ignore clones containing include keyword
+            else if (IgnoreInclude && token1.Value == "include")
             {
-                return false;
+                return TokenComparisonResult.Ignore;
             }
-            // Ignore clones containing include statements
-            else if (token1.Value == "define")
+            // Ignore clones containing define keyword
+            else if (IgnoreDefine && token1.Value == "define")
             {
-                return false;
+                return TokenComparisonResult.Ignore;
+            }
+            // Ignore clones containing typedef keyword
+            else if (IgnoreTypedef && token1.Value == "typedef")
+            {
+                return TokenComparisonResult.Ignore;
             }
             // Compare identifiers
             else if (token1.Type == TokenType.Identifier)
@@ -180,19 +200,19 @@ namespace CodeClones
                 if (Identifiers.ContainsKey(token1.Value))
                 {
                     // Lookup identifier in dictionary
-                    return token2.Value == Identifiers[token1.Value];
+                    return token2.Value == Identifiers[token1.Value] ? TokenComparisonResult.Matching : TokenComparisonResult.Different;
                 }
                 else
                 {
                     // Add identifier to dictionary
                     Identifiers.Add(token1.Value, token2.Value);
-                    return true;
+                    return TokenComparisonResult.Matching;
                 }
             }
             // Compare non-identifier tokens
             else
             {
-                return token1.Value == token2.Value;
+                return token1.Value == token2.Value ? TokenComparisonResult.Matching : TokenComparisonResult.Different;
             }
         }
     }

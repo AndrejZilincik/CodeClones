@@ -124,9 +124,9 @@
                                 <TextBox Text="{Binding MinLines}"/>
                                 <TextBlock>Min Tokens:</TextBlock>
                                 <TextBox Text="{Binding MinTokens}"/>
-                                <TextBlock>Percent Match:</TextBlock>
-                                <TextBox DockPanel.Dock="Right" Text="{Binding PercentMatch}"/>
-                                <Slider Margin="0,4,8,4" Minimum="50" Maximum="100" Value="{Binding PercentMatch}" IsSnapToTickEnabled="True" TickFrequency="5" IsMoveToPointEnabled="True"/>
+                                <TextBlock>Min % Match:</TextBlock>
+                                <TextBox DockPanel.Dock="Right" Text="{Binding MinPercentMatch}"/>
+                                <Slider Margin="0,4,8,4" Minimum="50" Maximum="100" Value="{Binding MinPercentMatch}" IsSnapToTickEnabled="True" TickFrequency="5" IsMoveToPointEnabled="True"/>
                             </DockPanel>
                             <Button Grid.Column="1" Name="Update" FontSize="16" Height="Auto" Margin="8,0,8,0" Click="UpdateButton_Click">Update</Button>
                         </Grid>
@@ -179,10 +179,11 @@
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Margin="2,0,0,4" FontSize="16">
                                             <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0}, lines {1}-{2}:">
+                                                <MultiBinding StringFormat="{}{3}%  {0}, lines {1}-{2}:">
                                                     <Binding Path="FileName2"/>
                                                     <Binding Path="StartLine2"/>
                                                     <Binding Path="EndLine2"/>
+                                                    <Binding Path="PercentMatch"/>
                                                 </MultiBinding>
                                             </TextBlock.Text>
                                         </TextBlock>

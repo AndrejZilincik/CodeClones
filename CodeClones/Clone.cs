@@ -13,6 +13,8 @@ namespace CodeClones
         public int StartLine2 { get; private set; }
         public int EndLine2 { get; private set; }
         
+        public int PercentMatch { get; private set; }
+
         private string _code1;
         public string Code1
         {
@@ -48,7 +50,7 @@ namespace CodeClones
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
         
-        public Clone(string fileName1, int startLine1, int endLine1, string fileName2, int startLine2, int endLine2)
+        public Clone(string fileName1, int startLine1, int endLine1, string fileName2, int startLine2, int endLine2, int percentMatch)
         {
             this.FileName1 = Path.GetFileName(fileName1);
             this.StartLine1 = startLine1;
@@ -57,6 +59,8 @@ namespace CodeClones
             this.FileName2 = Path.GetFileName(fileName2);
             this.StartLine2 = startLine2;
             this.EndLine2 = endLine2;
+
+            this.PercentMatch = percentMatch;
         }
     }
 }
